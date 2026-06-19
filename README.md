@@ -152,10 +152,4 @@ The banner prints what's live, e.g.:
   off by default; the agent uses the standard CMC API key path unless x402 is
   explicitly enabled. Nothing is simulated as a real payment.
 
----
 
-## Demo
-
-See the demo video (link in submission) for a full live cycle: banner showing
-all layers live → CMC Fear & Greed read → LLM decision → guardrail check →
-TWAK swap → on-chain tx on BscScan.
