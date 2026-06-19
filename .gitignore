@@ -1,0 +1,33 @@
+﻿# ── NEVER commit secrets (anywhere in the tree) ──
+.env
+**/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+*.key
+*.pem
+secrets.json
+credentials.json
+
+# TWAK local config (contains credentials)
+.twak/
+**/.twak/
+
+# Agent runtime state
+agent_state.json
+**/agent_state.json
+*.log
+**/*.log
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db

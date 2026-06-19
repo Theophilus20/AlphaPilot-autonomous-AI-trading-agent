@@ -1,0 +1,9 @@
+# AlphaPilot uses ONLY the Python standard library — no pip installs required.
+# (urllib for HTTP, json, subprocess to call the `twak` CLI, dataclasses, etc.)
+#
+# External requirements are command-line tools, not Python packages:
+#   - Python 3.10+
+#   - Node.js + Trust Wallet Agent Kit CLI:  npm install -g @trustwallet/cli
+#
+# Optional (only if you enable live x402 EIP-3009 signing on Base):
+# eth-account>=0.11.0
