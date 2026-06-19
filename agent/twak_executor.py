@@ -117,6 +117,38 @@ class TwakExecutor:
                 return None
         return None
 
+    def portfolio_holdings(self) -> dict:
+        """Read the wallet's actual token holdings (USD value per symbol) so the
+        agent knows what it really owns — even after a restart. Excludes the
+        USDT quote asset. Returns {SYMBOL: usd_value}. Best-effort; returns {}
+        if the portfolio can't be read."""
+        ok, data, _ = self._run(["wallet", "portfolio", "--json"], timeout=60)
+        holdings = {}
+        if not ok or not isinstance(data, (dict, list)):
+            return holdings
+        # TWAK portfolio JSON shapes vary; handle common ones defensively.
+        items = []
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict):
+            for key in ("assets", "holdings", "tokens", "balances", "portfolio"):
+                if isinstance(data.get(key), list):
+                    items = data[key]
+                    break
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            sym = (it.get("symbol") or it.get("Symbol") or "").upper()
+            usd = it.get("usd") or it.get("usdValue") or it.get("totalUsd") \
+                or it.get("valueUsd") or it.get("fiat") or 0
+            try:
+                usd = float(usd)
+            except (TypeError, ValueError):
+                usd = 0.0
+            if sym and sym != "USDT" and sym != "BNB" and usd > 0.05:
+                holdings[sym] = round(usd, 2)
+        return holdings
+
     def _token_arg(self, token: str) -> str:
         """Return what to pass to twak for a token: a known symbol stays a
         symbol; anything else resolves to a verified contract address."""

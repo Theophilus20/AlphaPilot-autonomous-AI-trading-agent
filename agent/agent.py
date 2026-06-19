@@ -125,6 +125,21 @@ class AlphaPilot:
             f"drawdown={self.rules.max_drawdown_pct}% slippage<={self.rules.max_slippage_pct}%")
         addr = self.executor.wallet_address() if self.executor.available else None
         log(f"Agent wallet: {addr or '(dry-run, no wallet)'}")
+        # Load what we ACTUALLY hold from the wallet, so a restart doesn't make
+        # the agent forget its positions and pile back into the same token.
+        if self.executor.available:
+            try:
+                real = self.executor.portfolio_holdings()
+                if real:
+                    self.holdings.update(real)
+                    self.recent_buys = list(real.keys())[-4:]
+                    held = ", ".join(f"{k}(${v})" for k, v in real.items())
+                    log(f"Loaded existing holdings from wallet: {held}")
+                    # reflect deployed capital so budget math is correct
+                    self.state.deployed = round(sum(real.values()), 2)
+                    self.state.open_positions = len(real)
+            except Exception as e:
+                log(f"(could not load wallet holdings: {e})")
         log("=" * 60)
 
     def _mark_to_market(self, snap):
