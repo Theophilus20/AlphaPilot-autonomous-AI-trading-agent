@@ -1,13 +1,15 @@
 """
-LLM decision engine — the "AI" in AI trading agent (OpenAI / ChatGPT).
+LLM decision engine — the "AI" in AI trading agent.
 
-ChatGPT reads the CMC market snapshot plus the rules/portfolio and returns a
-STRUCTURED decision (JSON). The model decides direction, token, size, confidence;
-the rules engine then INDEPENDENTLY vetoes anything unsafe. The model is never
-trusted to self-police — code is the backstop.
+Uses an LLM via OpenRouter (default model: openai/gpt-4o-mini; override with
+OPENROUTER_MODEL). The model reads the CMC market snapshot plus the
+rules/portfolio and returns a STRUCTURED decision (JSON): direction, token,
+size, confidence, slippage, and a one-line reason. The rules engine then
+INDEPENDENTLY vetoes anything unsafe — the model is never trusted to
+self-police; code is the backstop.
 
-No API key / no network -> transparent heuristic fallback (llm=False).
-Never presented as a real model call when it isn't.
+No API key / no network -> transparent deterministic heuristic fallback
+(llm=False). Nothing is presented as a real model call when it isn't.
 """
 
 import json
@@ -128,7 +130,7 @@ class Decider:
 
         return DecisionResult(self._heuristic(snapshot, rules, state, holdings), llm=False)
 
-    # ---- OpenAI / ChatGPT call -----------------------------------------
+    # ---- OpenRouter chat-completions call ------------------------------
 
     def _call_openai(self, payload):
         body = json.dumps({
@@ -214,10 +216,6 @@ class Decider:
                                 slippage_pct=min(1.0, rules.max_slippage_pct),
                                 reason=f"Fear (F&G={fg}): best setup {s.symbol} (score {sc}); "
                                        f"next: {runners}.")
-
-        # TRANSITION ZONE (40-60) -> hold (avoid overtrading / fees).
-        return Decision("HOLD", "", 0.0, 0.50,
-                        reason=f"Transition zone (F&G={fg}): holding, edge unclear.")
 
         # TRANSITION ZONE (40-60) -> hold (avoid overtrading / fees).
         return Decision("HOLD", "", 0.0, 0.50,

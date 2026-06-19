@@ -1,20 +1,19 @@
 """
-x402 demo resource server (stdlib only).
+x402 demo seller — a tiny local HTTP endpoint that requires x402 payment.
 
-A minimal SELLER that speaks x402, so you can demonstrate the agent's
-pay-per-request loop end-to-end on testnet without depending on an external
-provider's x402 endpoint being live.
+This is a LOCAL DEMO/TEST tool, not part of the live trading path. It lets you
+exercise the full x402 handshake end-to-end against x402_client.py without
+hitting a paid third-party API:
 
-Flow:
-  GET /signal           -> 402 Payment Required + payment terms (price, token, payTo)
-  GET /signal + X-PAYMENT header -> 200 + the data
+  GET /signal  with no payment   -> HTTP 402 + structured payment terms
+  GET /signal  with X-PAYMENT    -> 200 + a sample trading signal
 
-Run:  python x402_server.py        (listens on :8402)
-Point the agent at it with:  X402_SIGNAL_URL=http://localhost:8402/signal
+The payment terms advertise USDC on Base (the network CMC's x402 uses). In
+production you'd verify the payment proof via a facilitator's /verify + /settle;
+here we accept the presence of the payment header so the client flow can be
+demonstrated locally. Nothing here touches real funds.
 
-This is a DEMO facilitator-less server: it accepts any well-formed X-PAYMENT
-header (in production the server verifies the proof with a facilitator's
-/verify + /settle). Clearly labelled so it's not mistaken for production.
+Run:  python x402_server.py        (serves on X402_PORT, default 8402)
 """
 
 import http.server
@@ -25,11 +24,12 @@ from urllib.parse import urlparse
 
 PORT = int(os.environ.get("X402_PORT", "8402"))
 
-# Where payments should go (your agent wallet or a test recipient).
+# Where payments should go (a test recipient by default).
 PAY_TO = os.environ.get("X402_PAYTO", "0x000000000000000000000000000000000000dEaD")
-PRICE = os.environ.get("X402_PRICE", "0.01")     # USDC per request
+PRICE = os.environ.get("X402_PRICE", "10000")    # USDC smallest unit: 10000 = $0.01
 ASSET = os.environ.get("X402_ASSET", "USDC")
-NETWORK = os.environ.get("X402_NETWORK", "bsc-testnet")
+# CMC's x402 settles in USDC on Base (eip155:8453).
+NETWORK = os.environ.get("X402_NETWORK", "base")
 
 
 SAMPLE_SIGNAL = {

@@ -18,7 +18,7 @@ from typing import Optional
 QUOTE_CCY = "USDT"
 
 
-# Eligible BEP-20 tokens (BNB Hack). Trades outside this set do not count.
+
 ELIGIBLE_TOKENS = {
     "ETH", "USDT", "USDC", "XRP", "TRX", "DOGE", "ZEC", "ADA", "LINK", "BCH", "DAI", "TON", "USD1", "USDe", "M",
     "LTC", "AVAX", "SHIB", "XAUt", "WLFI", "H", "DOT", "UNI", "ASTER", "DEXE", "USDD", "ETC", "AAVE", "ATOM", "U",

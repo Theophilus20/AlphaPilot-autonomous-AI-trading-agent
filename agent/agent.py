@@ -1,16 +1,22 @@
 """
-AlphaPilot — autonomous AI trading agent (BSC testnet first).
+AlphaPilot — autonomous AI trading agent for BNB Hack Track 1 (BSC mainnet).
 
 The real loop, scored against the hackathon rubric:
-  CMC signals  ->  Claude decision  ->  rules guardrails  ->  TWAK sign+swap
-  (real data)      (real model)         (your limits)         (self-custody)
+  CMC signals  ->  LLM decision   ->  rules guardrails  ->  TWAK sign+swap
+  (real data)      (gpt-4o-mini /      (your limits)         (self-custody)
+                    OpenRouter)
 
 Safety posture:
-  - Defaults to BSC TESTNET. Mainnet requires NETWORK=mainnet AND
-    I_UNDERSTAND_MAINNET=yes in the environment — two explicit opt-ins.
+  - Runs on BSC mainnet (TWAK has no testnet for trading). Mainnet requires
+    NETWORK=mainnet AND I_UNDERSTAND_MAINNET=yes — two explicit opt-ins, so it
+    can never trade real funds by accident.
   - TWAK is the sole signer; this process never holds a private key.
   - Every decision is vetoed by rules_engine.check() before it can execute.
   - Quote-first: we fetch a quote and re-validate before signing.
+  - Tokens resolve to VERIFIED BSC contract addresses; unresolvable tokens are
+    skipped rather than traded by an ambiguous symbol.
+  - On startup it reads real wallet holdings, so a restart never forgets
+    positions or re-piles into the same token.
 
 Run:  python agent.py            (one cycle, dry-run if no creds)
       python agent.py --loop     (continuous, sleeps between cycles)
@@ -268,6 +274,17 @@ class AlphaPilot:
         log("5) Executing via TWAK (local signing, USD-sized)…")
         slip = max(d.slippage_pct, 2.0)  # a little headroom helps thin routes fill
         if d.action == "BUY":
+            # Safety: only buy a token we can resolve to a VERIFIED contract
+            # address (known-good map or exact-symbol+price search). This avoids
+            # the ambiguous symbol-resolution that can misfire on --usd.
+            from twak_executor import resolve_token, TWAK_NATIVE_SYMBOLS
+            if d.symbol.upper() not in TWAK_NATIVE_SYMBOLS:
+                addr = resolve_token(self.executor, d.symbol)
+                if not addr:
+                    log(f"   ⊘ Skipping {d.symbol}: no verified BSC contract "
+                        f"address (won't risk an unsafe swap).")
+                    self.last_decision = d
+                    return
             res = self.executor.swap_usd(QUOTE_CCY, d.symbol, d.amount, slippage=slip)
         else:
             res = self.executor.swap_usd(d.symbol, QUOTE_CCY, d.amount, slippage=slip)
