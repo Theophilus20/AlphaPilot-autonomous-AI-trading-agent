@@ -1,8 +1,6 @@
 """
 Rules engine — the guardrails the agent must obey before any trade.
 
-Hackathon-scored (Autonomous execution and guardrails, 20 pts):
-token allowlist, per-trade cap, daily limit, drawdown cap, slippage protection.
 
 Every decision passes through `check()` BEFORE it can reach the executor.
 A decision that fails any rule is rejected and never signed.
