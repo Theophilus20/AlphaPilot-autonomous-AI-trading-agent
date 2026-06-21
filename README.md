@@ -50,9 +50,7 @@ verified routing through **PancakeSwap** on-chain (see the tx above on BscScan).
 
 ## Strategy — contrarian mean-reversion with risk gates
 
-The agent profits from sentiment extremes while respecting the competition's
-risk rules (ranked on PnL, hard max-drawdown gate, minimum trade count,
-transaction costs):
+The agent capitalizes on sentiment extremes while maintaining disciplined risk management and cost-aware execution.
 
 - **Fear (F&G ≤ 40):** market oversold → **BUY** the best setup. The agent scans
   ~56 eligible tokens, ranks by how oversold each is (with a quality-major
